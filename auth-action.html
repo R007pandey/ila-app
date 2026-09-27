@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Your Ila account — Ila</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .field { display: grid; gap: 6px; margin: 14px 0; }
+  .field label { font-weight: 700; font-size: 14px; }
+  .field input { height: 52px; padding: 0 16px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--glass); color: var(--ink); font: inherit; }
+  .field input:focus-visible { outline: 3px solid var(--rose); outline-offset: 1px; }
+  button.button { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+  button.button[disabled] { opacity: .55; cursor: default; }
+  .status { padding: 14px 18px; border-radius: 18px; background: var(--petal); margin: 16px 0 0; }
+  .status.error { background: #FFE3E3; color: #8C1D18; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="wrap nav">
+  <a class="brand" href="./"><img src="assets/ila-icon-512.png" alt="">Ila</a>
+</header>
+<main class="wrap doc"><div class="card">
+  <p class="eyebrow">Your Ila account</p>
+
+  <section id="reset" hidden>
+    <h1 style="font-size:clamp(30px,5vw,42px)">Choose a new password</h1>
+    <p>For <strong id="reset-email"></strong>. Your new password is protected on this page before it's sent, exactly as the app does, so no one else ever sees it.</p>
+    <form id="reset-form" novalidate>
+      <div class="field"><label for="pw1">New password</label><input id="pw1" type="password" autocomplete="new-password" minlength="12" required></div>
+      <div class="field"><label for="pw2">Type it again</label><input id="pw2" type="password" autocomplete="new-password" minlength="12" required></div>
+      <p class="note">At least 12 characters. A short sentence works well.</p>
+      <button class="button rose" id="reset-button" type="submit">Save new password</button>
+    </form>
+    <p class="note" style="margin-top:18px">Your cloud backup stays safe. The next time you sign in to Ila, it asks for your <strong>recovery code</strong> once to unlock it with the new password.</p>
+  </section>
+
+  <section id="verified" hidden>
+    <h1 style="font-size:clamp(30px,5vw,42px)">Email confirmed</h1>
+    <p>Thank you. Go back to Ila and tap <strong>I've confirmed it</strong> to turn on your end-to-end encrypted backup.</p>
+  </section>
+
+  <section id="done" hidden>
+    <h1 style="font-size:clamp(30px,5vw,42px)">Password changed</h1>
+    <p>Open Ila and sign in with your new password. Have your recovery code ready: Ila asks for it once to unlock your backup.</p>
+  </section>
+
+  <section id="loading"><h1 style="font-size:clamp(30px,5vw,42px)">One moment…</h1></section>
+  <p id="status" class="status" role="status" hidden></p>
+</div></main>
+<footer><div class="wrap"><span>© 2026 Ila</span><span><a href="support.html">Support</a> · <a href="privacy.html">Privacy</a></span></div></footer>
+
+<script>
+// Handles Firebase email action links (set as the custom action URL in Firebase Authentication → Templates).
+// The new password is derived exactly like the app (code/app/src/main/java/app/ila/CloudCrypto.kt):
+//   master = PBKDF2-SHA256(password, SHA-256("ila-account-v1|" + email), 600000)
+//   Firebase password = base64url(HKDF-SHA256(master, salt "ila-hkdf-v1", info "auth"))
+// Only that derived value is sent to Google. The page loads no third-party code.
+(() => {
+  const params = new URLSearchParams(location.search);
+  const mode = params.get('mode'), code = params.get('oobCode');
+  const apiKey = params.get('apiKey') || 'AIzaSyAatuYOE76j3LYbSVbCfgGCYiM-DV2iupk';
+  const api = (method, body) => fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), referrerPolicy: 'no-referrer'
+  }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error && d.error.message || 'ERROR'); return d; });
+  const show = id => { for (const s of ['reset', 'verified', 'done', 'loading']) document.getElementById(s).hidden = s !== id; };
+  const status = (text, error) => { const el = document.getElementById('status'); el.textContent = text; el.hidden = !text; el.classList.toggle('error', !!error); };
+  const friendly = m => /EXPIRED|INVALID_OOB_CODE/.test(m) ? 'This link has expired or was already used. Ask Ila for a new one.'
+    : /WEAK_PASSWORD/.test(m) ? 'Please choose a longer password.' : /TOO_MANY/.test(m) ? 'Too many attempts. Please wait a little and try again.'
+    : 'Something went wrong. Please try the link again.';
+
+  const enc = new TextEncoder();
+  async function authPassword(email, password) {
+    const salt = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode('ila-account-v1|' + email.trim().toLowerCase())));
+    const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    const master = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 600000 }, base, 256);
+    const hk = await crypto.subtle.importKey('raw', master, 'HKDF', false, ['deriveBits']);
+    const out = new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: enc.encode('ila-hkdf-v1'), info: enc.encode('auth') }, hk, 256));
+    return btoa(String.fromCharCode(...out)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  window.ilaAuthPassword = authPassword; // exposed for the test vector check
+
+  if (!code || !mode) { show('loading'); document.querySelector('#loading h1').textContent = 'Nothing to do here'; status('Open this page from the link in an email from Ila.'); return; }
+
+  if (mode === 'verifyEmail') {
+    api('update', { oobCode: code }).then(() => show('verified')).catch(e => { show('loading'); document.querySelector('#loading h1').textContent = 'Link not valid'; status(friendly(e.message), true); });
+  } else if (mode === 'resetPassword') {
+    api('resetPassword', { oobCode: code }).then(d => {
+      const email = d.email; document.getElementById('reset-email').textContent = email; show('reset');
+      document.getElementById('reset-form').addEventListener('submit', async ev => {
+        ev.preventDefault();
+        const p1 = document.getElementById('pw1').value, p2 = document.getElementById('pw2').value;
+        if (p1.length < 12) return status('Use at least 12 characters.', true);
+        if (p1 !== p2) return status("The passwords don't match.", true);
+        const button = document.getElementById('reset-button'); button.disabled = true; status('Protecting your password…');
+        try { await api('resetPassword', { oobCode: code, newPassword: await authPassword(email, p1) }); status(''); show('done'); }
+        catch (e) { status(friendly(e.message), true); button.disabled = false; }
+      });
+    }).catch(e => { show('loading'); document.querySelector('#loading h1').textContent = 'Link not valid'; status(friendly(e.message), true); });
+  } else {
+    show('loading'); document.querySelector('#loading h1').textContent = 'Done'; status('If you asked for this, the change is complete. Contact rishi007.pandey@live.com if you didn’t.');
+  }
+})();
+</script>
+</body>
+</html>
