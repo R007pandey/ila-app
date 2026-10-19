@@ -23,14 +23,14 @@
 <div class="card">
 <p class="eyebrow">Privacy policy</p>
 <h1 style="font-size:clamp(34px,5vw,48px)">Your diary is yours</h1>
-<p class="note">Last updated 26 September 2026</p>
+<p class="note">Last updated 19 October 2026</p>
 
 <div class="summary">
   <p><strong>In short:</strong></p>
   <ul>
     <li>Your diary (periods, check-ins, symptoms, notes) is stored <strong>encrypted on your phone</strong>.</li>
     <li>An <strong>account and cloud backup are optional</strong>. Backups are <strong>end-to-end encrypted</strong>, so no one at Ila can read them.</li>
-    <li><strong>Anonymous usage stats and crash reports are off</strong> unless you turn them on. They never include anything from your diary.</li>
+    <li><strong>Optional usage and diagnostic data</strong> (usage stats, crash reports and app speed) is off unless you turn it on. It never includes anything from your diary.</li>
     <li>We don't show ads or sell data.</li>
   </ul>
 </div>
@@ -50,7 +50,7 @@
 <p>You can use Ila fully without an account. If you create one, it's handled by <strong>Firebase Authentication</strong> (a Google service):</p>
 <ul>
   <li><strong>Email and password:</strong> we keep your email address.</li>
-  <li><strong>Protected password:</strong> your password is transformed on your phone before sign-in, so Firebase never receives it in a usable form, and neither do we.</li>
+  <li><strong>Your password:</strong> the password you type isn't sent. Ila turns it into a different sign-in value on your phone, and Firebase stores that value (hashed, as it does any password). The sign-in value can't be used to unlock your backup.</li>
   <li><strong>Sign in with Google:</strong> Google shares your name, email address and account ID with us for sign-in.</li>
   <li><strong>Why we need it:</strong> to sign you in and to connect you to your encrypted backup.</li>
   <li><strong>How long we keep it:</strong> until you delete your account.</li>
@@ -59,13 +59,16 @@
 <h2>3. Optional cloud backup (end-to-end encrypted)</h2>
 <p>If you turn on backup, Ila encrypts a copy of your diary <strong>on your phone</strong> before uploading it to Cloud Firestore (Google Cloud, Mumbai region).</p>
 <ul>
-  <li><strong>Who holds the key:</strong> it's derived from your password (with Google sign-in, from a separate backup password you choose), and you also get a <strong>recovery code</strong> you keep yourself. The key never leaves your phone unencrypted.</li>
-  <li><strong>What we can see:</strong> neither we nor Google can read your backup. We only see that an encrypted file exists, its size and when it was saved.</li>
+  <li><strong>The backup key:</strong> a random key, made on your phone, locks your backup. On your phone it's stored encrypted, under a key protected by Android Keystore. It's never uploaded in a form anyone else can use.</li>
+  <li><strong>Locked copies of the key:</strong> so you can unlock your backup on a new phone, Firestore keeps copies of the key that are locked by your <strong>recovery code</strong> and, for email accounts, by your password. Neither can be opened without the code or the password.</li>
+  <li><strong>Your phone's Google backup:</strong> where Android supports it, Ila also puts the key in Android Block Store. It's included in your phone's own Google backup only when Android can encrypt it end to end with your screen lock, so a new phone restored from that backup unlocks without a password or code. Neither we nor Google can read it.</li>
+  <li><strong>The recovery code:</strong> shown when backup starts. You can save it to your password manager (for example Google Password Manager) or write it down.</li>
+  <li><strong>What we can see:</strong> neither we nor Google can read your backup. We only see that an encrypted file exists, its size, when it was saved, and a short fingerprint that tells the app which key opens it.</li>
   <li><strong>How many are kept:</strong> the latest three backups.</li>
-  <li><strong>If you lose both:</strong> if you forget your password <em>and</em> lose your recovery code, the cloud backup can't be recovered, by us or anyone. The diary on your phone isn't affected.</li>
+  <li><strong>If you lose every way in:</strong> if you lose your recovery code, and you can't sign in with your password or restore your phone's Google backup, the cloud backup can't be recovered, by us or anyone. The diary on your phone isn't affected.</li>
 </ul>
 
-<h2 id="stats">4. Optional anonymous usage stats and crash reports</h2>
+<h2 id="stats">4. Optional usage and diagnostic data</h2>
 <p>These are <strong>off by default</strong>. Ila asks once, and you can change your mind at any time in <em>Settings → Privacy</em>. If you agree, we use Google Analytics for Firebase, Firebase Crashlytics and Firebase Performance Monitoring to learn how the app is used and to fix problems.</p>
 <div class="grid">
   <div>
