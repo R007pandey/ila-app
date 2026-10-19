@@ -33,7 +33,7 @@
     <form id="reset-form" novalidate>
       <div class="field"><label for="pw1">New password</label><input id="pw1" type="password" autocomplete="new-password" minlength="12" required></div>
       <div class="field"><label for="pw2">Type it again</label><input id="pw2" type="password" autocomplete="new-password" minlength="12" required></div>
-      <p class="note">At least 12 characters. A short sentence works well.</p>
+      <p class="note">At least 8 characters. A short sentence works well.</p>
       <button class="button rose" id="reset-button" type="submit">Save new password</button>
     </form>
     <p class="note" style="margin-top:18px">Your cloud backup stays safe. The next time you sign in to Ila, it asks for your <strong>recovery code</strong> once to unlock it with the new password.</p>
@@ -94,7 +94,7 @@
       document.getElementById('reset-form').addEventListener('submit', async ev => {
         ev.preventDefault();
         const p1 = document.getElementById('pw1').value, p2 = document.getElementById('pw2').value;
-        if (p1.length < 12) return status('Use at least 12 characters.', true);
+        if (p1.length < 8) return status('Use at least 8 characters.', true);
         if (p1 !== p2) return status("The passwords don't match.", true);
         const button = document.getElementById('reset-button'); button.disabled = true; status('Protecting your password…');
         try { await api('resetPassword', { oobCode: code, newPassword: await authPassword(email, p1) }); status(''); show('done'); }
