@@ -23,13 +23,13 @@
 <div class="card">
 <p class="eyebrow">Privacy policy</p>
 <h1 style="font-size:clamp(34px,5vw,48px)">Your diary is yours</h1>
-<p class="note">Last updated 19 October 2026</p>
+<p class="note">Last updated 25 October 2026</p>
 
 <div class="summary">
   <p><strong>In short:</strong></p>
   <ul>
     <li>Your diary (periods, check-ins, symptoms, notes) is stored <strong>encrypted on your phone</strong>.</li>
-    <li>An <strong>account and cloud backup are optional</strong>. Backups are <strong>end-to-end encrypted</strong>, so no one at Ila can read them.</li>
+    <li>An <strong>account and cloud backup are optional</strong>. Backups are <strong>encrypted on your phone</strong> before upload, and only your signed-in account can reach them. With <strong>Extra privacy</strong> on, they're end-to-end encrypted, so no one but you can open them.</li>
     <li><strong>Optional usage and diagnostic data</strong> (usage stats, crash reports and app speed) is off unless you turn it on. It never includes anything from your diary.</li>
     <li>We don't show ads or sell data.</li>
   </ul>
@@ -42,7 +42,7 @@
 <p>Everything you record in Ila stays on your phone: period dates, daily check-ins (flow, pain, mood, energy, sleep, spotting and symptoms), notes, your optional nickname, goals, age range and body details, and your settings.</p>
 <ul>
   <li>It's stored in an encrypted database (SQLCipher). The key is protected by your phone's Android Keystore.</li>
-  <li>We never receive it, unless you turn on cloud backup, and then only as encrypted data we can't read (section 3).</li>
+  <li>We never receive it, unless you turn on cloud backup, and then only as encrypted data (section 3).</li>
   <li>Reminders are scheduled and shown on your phone. Their text is kept neutral, and they're hidden on the lock screen.</li>
 </ul>
 
@@ -56,16 +56,26 @@
   <li><strong>How long we keep it:</strong> until you delete your account.</li>
 </ul>
 
-<h2>3. Optional cloud backup (end-to-end encrypted)</h2>
-<p>If you turn on backup, Ila encrypts a copy of your diary <strong>on your phone</strong> before uploading it to Cloud Firestore (Google Cloud, Mumbai region).</p>
+<h2>3. Optional cloud backup</h2>
+<p>If you turn on backup, Ila encrypts a copy of your diary <strong>on your phone</strong> before uploading it to Cloud Firestore (Google Cloud, Mumbai region). A random key, made on your phone, locks it. Where that key is kept depends on one setting, <em>Settings → Account &amp; backup → Extra privacy</em>.</p>
+<h3>Standard (Extra privacy off, the default)</h3>
 <ul>
-  <li><strong>The backup key:</strong> a random key, made on your phone, locks your backup. On your phone it's stored encrypted, under a key protected by Android Keystore. It's never uploaded in a form anyone else can use.</li>
-  <li><strong>Locked copies of the key:</strong> so you can unlock your backup on a new phone, Firestore keeps copies of the key that are locked by your <strong>recovery code</strong> and, for email accounts, by your password. Neither can be opened without the code or the password.</li>
-  <li><strong>Your phone's Google backup:</strong> where Android supports it, Ila also puts the key in Android Block Store. It's included in your phone's own Google backup only when Android can encrypt it end to end with your screen lock, so a new phone restored from that backup unlocks without a password or code. Neither we nor Google can read it.</li>
-  <li><strong>The recovery code:</strong> shown when backup starts. You can save it to your password manager (for example Google Password Manager) or write it down.</li>
-  <li><strong>What we can see:</strong> neither we nor Google can read your backup. We only see that an encrypted file exists, its size, when it was saved, and a short fingerprint that tells the app which key opens it.</li>
-  <li><strong>How many are kept:</strong> the latest three backups.</li>
+  <li><strong>The key is kept with your account</strong> in Firestore, where security rules let only your signed-in account read it. Signing in on any phone restores your backup, with no code to keep safe.</li>
+  <li><strong>What this means:</strong> your backup is encrypted, and only your account can reach it. Because the key is stored for your account, someone who controls your Ila account, or the people who run the service (us, or Google as its host), could in principle open it. We don't, and we never will except as the law requires; access to the project is limited to the developer.</li>
+</ul>
+<h3>Extra privacy (end-to-end)</h3>
+<ul>
+  <li><strong>The key is never uploaded in a form anyone else can use.</strong> Firestore keeps only copies of it locked by your <strong>recovery code</strong> and, for email accounts, by your password. Neither can be opened without the code or the password, so neither we nor Google can read your backup.</li>
+  <li><strong>The recovery code</strong> is shown when you turn Extra privacy on. You can save it to your password manager (for example Google Password Manager) or write it down.</li>
+  <li><strong>Your phone's Google backup:</strong> where Android supports it, Ila also puts the key in Android Block Store. It's included in your phone's own Google backup only when Android can encrypt it end to end with your screen lock, so a new phone restored from that backup unlocks without a password or code.</li>
   <li><strong>If you lose every way in:</strong> if you lose your recovery code, and you can't sign in with your password or restore your phone's Google backup, the cloud backup can't be recovered, by us or anyone. The diary on your phone isn't affected.</li>
+  <li>Backups made before 25 October 2026 use Extra privacy and keep it until you turn it off.</li>
+</ul>
+<h3>Either way</h3>
+<ul>
+  <li><strong>What we see in normal operation:</strong> that an encrypted file exists, its size, when it was saved, and a short fingerprint that tells the app which key opens it.</li>
+  <li><strong>How many are kept:</strong> the latest three backups.</li>
+  <li><strong>Deleting your account</strong> removes your backups and every copy of the key from Firestore.</li>
 </ul>
 
 <h2 id="stats">4. Optional usage and diagnostic data</h2>
